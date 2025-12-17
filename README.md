@@ -68,10 +68,10 @@ The entire process runs without manual intervention after submission.
 ```
 ai-linkedin-content-automation-n8n/
 │
-├── workflow.json        # Exported n8n workflow
-├── README.md            # Project documentation
-├── screenshots/         # Workflow screenshots
-└── demo/                # Demo video link or notes
+├── workflow.json        
+├── README.md           
+├── screenshots/        
+└── demo/                
 ```
 
 
