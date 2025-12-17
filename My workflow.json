@@ -1,0 +1,457 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "authentication": "basicAuth",
+        "formTitle": "LinkedIn Post Generator ",
+        "formDescription": "Fill out these fields and you'll have a full LinkedIn post ready to go in a minute.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Email",
+              "fieldType": "email",
+              "defaultValue": "name@example.com",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Topic of Post ",
+              "defaultValue": "Agent ",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Target Audience"
+            }
+          ]
+        },
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "920435e1-3ee2-4b3f-bd97-854cc8b6fff1",
+      "name": "On form submission",
+      "webhookId": "ed5f3d59-d654-42ec-b935-8675994dbdf5",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "3nfWbkxDWYRtLEOO",
+          "name": "CHHAVI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Topic of Post: {{ $json['Topic of Post '] }}\n",
+        "options": {
+          "systemMessage": "=# overview\nYou are an AI specialized in creating professional, educational, and engaging LinkedIn posts based on any topic provided by the user. \n\n## Objectives:\nAlways begin by conducting a real-time search using the Tavily tool to gather the most accurate, up-to-date information on the topic. The post should be written to appeal to the provide target audience.\n\nBased on your research, generate a well-structured LinkedIn post that:\n- Starts with an engaging hook\n- Professional in tone \n- Clear and easy to read \n- Educational and insightful\n- Light on emojis (use only when highly relevant and minimal)\n- Includes proper source attribution (e.g., \"according to [source]\")\n- Contains relevant hashtags to improve visibility\n- Ends with a clear call to action (e.g., asking for thoughts, feedback, or shares)\n\n## Output Instructions:\n- Your ONLY output should be the final LinkedIn post text.\n- Do not include explanations,  notes , or anything beyond the post itself.\n\n## Example Workflow:\n1) Receive a topic (e.g., \"The ROI of warehouse automation\")\n2) Use Tavily to search and gather recent information or case studies \n3) Draft a LinkedIn post using that research\n4) Format it with source citations, clean structure, optional hashtags, and a call to action\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "0f68403b-3d3b-4a00-b493-959dae9da4dc",
+      "name": "LinkedIn Post Agent"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Use this tool to search the web.",
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer your_api_key"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"query\":\"{{$json['Topic of Post']}}\",\n  \"topic\": \"general\",\n  \"search_depth\": \"advanced\",\n  \"chunks_per_source\": 3,\n  \"max_results\": 1,\n  \"time_range\": null,\n  \"days\": 7,\n  \"include_answer\": true,\n  \"include_raw_content\": false,\n  \"include_images\": false,\n  \"include_image_descriptions\": false,\n  \"include_domains\": [],\n  \"exclude_domains\": []\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.3,
+      "position": [
+        512,
+        224
+      ],
+      "id": "3cf0c217-2369-45e4-a3a9-140ebb79843b",
+      "name": "Tavily"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.1-8b-instant",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        176,
+        304
+      ],
+      "id": "48b2af1f-6844-469d-80ee-d68ae1d94a9d",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "Sgfs26IVRCakwpie",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=LinkedIn Post:\n{{ $json.output }}",
+        "options": {
+          "systemMessage": "=# Overview\nYou are an AI agent that transforms LinkedIn posts into visual prompt descriptions for generating Branh:. arketing materiale These visuals are designed to be paired witk the post on LinkedIn, helping communicate the message in a visually engaging. brand-aligned way.\n\n## Objective:\nI⁃ Read and analyze the given LinkedIn post. \n- Identify the main message, insight, or takeaway from the post.\n- Create a clear and compelling graphic prompt that can be used with a text-to-image generator.\n⁃ The result should be a marketing-style graphic - not a literal scene or hyperrealistic photo - that: \n1) visually supports or illustrates the key idea of the post 2) Looks appropriate for use in a professional LinkedIn feed 3) Feels polished, modern, and engaging\n\n## Output Instructions:\n- Output only the final image prompt. Do not output quotation marks. \n- Do not repeat or rephrase the LinkedIn post. \n- DO not add any explanations or extra content - just the image prompt. \n- Never leave things blank like \"Header area reserved for customizable callout text\"\n- Output numeric stats when available in the original post\n\n## Style Guidelines:\n⁃ Think like a brand designer or marketing creative. \n- Visuals may include: text, charts, icons, abstract shapes, overlays, modern illustrations, motion -like effects, bold typography elements (described, not rendered), or metaphorical concepts.\n⁃ You can mention layout suggestions (e.g., \"split screen design,\"header with bold title and subtle background illustration\"). \n- Assume the output will be generated using AI image tools - your prompt should guide those tools effectively.\n\n## Example Prompt Format:\nA modern flat-style graphic showing a human brain aannarted to lechanic.1 gears, representing the fusion of AI and automation. Minimalist background, soft gradients, clean sans-serif text placement space at the top."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        560,
+        0
+      ],
+      "id": "f118d9ea-7e97-4327-9525-dfc61feaecf7",
+      "name": "Image Prompt Agent"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\n// Loop over input items and create a new field 'image_prompt' with safe quotes\nfor (const item of $input.all()) {\n  // Replace all double quotes inside the prompt with single quotes\n  item.json.image_prompt = item.json.output.replace(/\"/g, \"'\");\n}\n\nreturn $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        912,
+        0
+      ],
+      "id": "604b85d5-d7a2-4487-abd2-98d44988a16a",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c722587c-5277-4147-aaaa-aa26aee7e223",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "succeeded",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1744,
+        0
+      ],
+      "id": "d62951d3-cc87-42c8-b005-997a30fee13d",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1712,
+        336
+      ],
+      "id": "2c60a6d2-7031-4647-803b-c22d781bb5c8",
+      "name": "Wait",
+      "webhookId": "ee60295d-5071-4ed6-b7f8-573a53f5b8df"
+    },
+    {
+      "parameters": {
+        "url": "={{$json[\"urls\"][\"get\"]}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Token your_api_key"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1504,
+        48
+      ],
+      "id": "84d1b570-7ced-4668-9dfe-4e1a42a950a6",
+      "name": "Poll Status"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.output }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "Image"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2128,
+        256
+      ],
+      "id": "f33b697f-d7d2-4a5d-9813-f5ea7e569da1",
+      "name": "Download Image"
+    },
+    {
+      "parameters": {
+        "sendTo": "sharmachavi0110@gmail.com",
+        "subject": "AI Generated Post with Image",
+        "message": "=<h2>AI Generated Content</h2>  <p>    {{ $('LinkedIn Post Agent').item.json.output }}</p>  <br/>  <p><b>Attached is the AI-generated image 👇</b></p>",
+        "options": {
+          "appendAttribution": false,
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {
+                "property": "Image"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2336,
+        256
+      ],
+      "id": "a85d7d11-ee45-46a7-8196-179c6b764dfa",
+      "name": "Send a message",
+      "webhookId": "b75c89d2-b809-447e-a87e-ba8422198c91",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "vmhmRTeQuOHE0iAC",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2336,
+        528
+      ],
+      "id": "55a1f16b-1563-42ed-8e54-13ad7c35ea6f",
+      "name": "LinkedIn"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.replicate.com/v1/predictions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Token your_api_key"
+            },
+            {}
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"version\": \"ideogram-ai/ideogram-v3-turbo\",\n  \"input\": {\n    \"prompt\": \"{{$json.image_prompt}}\",\n    \"width\": 1024,\n    \"height\": 1024,\n    \"num_outputs\": 1\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "41fc3f45-c697-4222-aa70-21d9661d8dec",
+      "name": "Image Generation API"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "LinkedIn Post Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tavily": {
+      "ai_tool": [
+        [
+          {
+            "node": "LinkedIn Post Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "LinkedIn Post Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Image Prompt Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LinkedIn Post Agent": {
+      "main": [
+        [
+          {
+            "node": "Image Prompt Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image Prompt Agent": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Image Generation API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Download Image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Poll Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Poll Status": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Image": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "LinkedIn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image Generation API": {
+      "main": [
+        [
+          {
+            "node": "Poll Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e4e14bf3-48ba-4807-b3fd-39a7330c43ba",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c91517455e49a337ff68136dd0ce6991a0005da0d5640d5e40a780a07731deb7"
+  },
+  "id": "nbNq90A0OpjMubr9",
+  "tags": []
+}
